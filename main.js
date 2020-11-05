@@ -4,9 +4,14 @@ const cols  = 7;
 let   user  = 1;
 
 $( document ).ready(function() {
+    initialize();
+    modalActions(1);
+});
+
+const initialize = () => {
     createGrid();
     eventListener();
-});
+}
 
 const createGrid = () => {
 
@@ -40,6 +45,13 @@ const eventListener = () => {
        runProcess(obj_params);
         
     });
+
+    $( "#mbtn-restart" ).on( "click", function() {
+        $(`#connect4-body`).empty();
+        initialize();
+        user = 1;
+        $("#modalConenct4").modal(`hide`);
+     });
 }
 
 const runProcess = (params) => {
@@ -51,9 +63,29 @@ const runProcess = (params) => {
         nxt_user = insertToSlot(params, sel_empty_item);
 
         //check if has winner
-        checkForWinner(params, sel_empty_item);
+        winner_flag = checkForWinner(params, sel_empty_item);
 
-        user = nxt_user;
+        if(winner_flag){
+            modalActions(2,user);
+        }else{
+
+            draw_flag = checkDrawState();
+            if(!draw_flag){
+                user = nxt_user;
+
+                switch(user){
+                    case 1:
+                        $(`#actions`).css(`color`,`red`).html(`Player 1's Turn`);
+                    break;
+                    case 2:
+                        $(`#actions`).css(`color`,`yellow`).html(`Player 2's Turn`);
+                    break;
+                }
+            }else{
+               modalActions(null,null,draw_flag);
+            }
+        }
+
 }
 
 const checkEmptySlots = (params) => {
@@ -99,7 +131,7 @@ const checkForWinner = (params, sel_empty_item) => {
      flag_diagonal       = checkDiagonal(params,sel_empty_item);
 
      if(flag_horizontal || flag_vertical || flag_diagonal){
-        alert('winner');
+       return true;
      }
 }
 
@@ -347,4 +379,71 @@ const checkDiagonal = (params, sel_empty_item) => {
 
     return flag_diagonal;
 
+}
+
+
+const modalActions  = (action, user, draw_flag) => {
+
+    let body, winner;
+
+    if(draw_flag) {
+        body = `
+            <h2>Game is Draw</h2>
+            <p style="text-align: center; text-justify: inter-word;">No more moves left, Play another game?</p>
+        `;
+        $(`#mbtn-intro`).addClass(`d-none`);
+        $(`#mbtn-restart`).removeClass(`d-none`);
+    }else{
+        
+        switch(action){
+
+            case 1: 
+                body = `
+                        <h2>Rules:</h2>
+                        <p style="text-align: justify; text-justify: inter-word;">The aim for both players is to make a straight line of four own pieces; the line can be vertical, 
+                        horizontal or diagonal. Moves are made alternatively, one by turn.</p>
+                `;
+                $(`#mbtn-intro`).removeClass(`d-none`);
+                $(`#mbtn-restart`).addClass(`d-none`);
+            break;
+            case 2:
+                switch(user){
+                    case 1:
+                        winner = `Player 1`;
+                    break;
+                    case 2:
+                        winner = `Player 2`;
+                    break;
+                }
+
+                body = `
+                        <h2>Winner: ${winner}</h2>
+                        <p style="text-align: center; text-justify: inter-word;">Play another game?</p>
+                `;
+                $(`#mbtn-intro`).addClass(`d-none`);
+                $(`#mbtn-restart`).removeClass(`d-none`);
+            break;
+
+
+        }
+    }
+
+
+    $('#modal-body').html(body);
+    $("#btn-modal").click();
+
+}
+
+const checkDrawState = () => {
+
+    let count = 0;
+
+    $('.cols').each(function(i, obj) {
+         if($(this).hasClass(`empty`)){
+            count++;
+         }
+    });
+
+    return (count > 0) ? false : true;
+  
 }
